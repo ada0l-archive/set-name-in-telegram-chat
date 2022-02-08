@@ -55,11 +55,20 @@ async def on_shutdown(dp):
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    executor.start_webhook(
-        dispatcher=dp,
-        webhook_path=settings.WEBHOOK_PATH,
-        skip_updates=True,
-        on_startup=on_startup,
-        host=settings.WEBAPP_HOST,
-        port=settings.WEBAPP_PORT,
-    )
+    if settings.HEROKU_APP_NAME:
+        logging.info("Start webhook")
+        executor.start_webhook(
+            dispatcher=dp,
+            webhook_path=settings.WEBHOOK_PATH,
+            skip_updates=True,
+            on_startup=on_startup,
+            host=settings.WEBAPP_HOST,
+            port=settings.WEBAPP_PORT,
+        )
+    else:
+        logging.info("Start polling")
+        executor.start_polling(dp, skip_updates=True)
+
+
+if __name__ == '__main__':
+    main()
