@@ -2,26 +2,29 @@ import logging
 
 from aiogram import Bot, Dispatcher, executor, types, utils
 
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+
 import set_name_in_telegram_chat.settings as settings
 
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=settings.TELEGRAM_BOT_API_TOKEN)
 dp = Dispatcher(bot)
+dp.middleware.setup(LoggingMiddleware())
 
 
 @dp.message_handler(
     chat_type=[types.ChatType.SUPERGROUP, types.ChatType.GROUP],
     commands=['start'])
 async def send_welcome(message: types.Message):
-    await message.reply("Привет, кожанный мешок.\nЯ помогу поменять тебе ник в этом ламповом чатике")
+    await message.reply("Привет, кожанный мешок. Я помогу поменять тебе ник в этом ламповом чатике")
 
 
 @dp.message_handler(
     chat_type=[types.ChatType.PRIVATE],
     commands=['start'])
 async def send_welcome(message: types.Message):
-    await message.reply("Привет, кожанный мешок.\n. Добавь меня в какой-нибудь чатик")
+    await message.reply("Привет, кожанный мешок. Добавь меня в какой-нибудь чатик")
 
 
 @dp.message_handler(
@@ -40,5 +43,22 @@ async def send_welcome(message: types.Message):
         print(e)
 
 
-if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+async def on_startup(dp):
+    logging.warning('Starting connection. ')
+    await bot.set_webhook(settings.WEBHOOK_URL, drop_pending_updates=True)
+
+
+async def on_shutdown(dp):
+    logging.warning('Bye! Shutting down webhook connection')
+
+
+def main():
+    logging.basicConfig(level=logging.INFO)
+    executor.start_webhook(
+        dispatcher=dp,
+        webhook_path=settings.WEBHOOK_PATH,
+        skip_updates=True,
+        on_startup=on_startup,
+        host=settings.WEBAPP_HOST,
+        port=settings.WEBAPP_PORT,
+    )
