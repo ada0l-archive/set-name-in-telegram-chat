@@ -40,6 +40,7 @@ async def send_welcome(message: types.Message):
                                                       message.get_args())
         await message.reply(f"Теперь ты {message.get_args()}, но все равно кожанный мешок.")
     except Exception as e:
+        await message.reply(f"{e}")
         print(e)
 
 
