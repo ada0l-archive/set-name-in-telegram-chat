@@ -1,8 +1,10 @@
 import logging
 
-from aiogram import Bot, Dispatcher, executor, types, utils
+from aiogram import Bot, Dispatcher, executor, types
 
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
+
+from aiogram.utils.exceptions import BadRequest
 
 import set_name_in_telegram_chat.settings as settings
 
@@ -31,17 +33,24 @@ async def send_welcome(message: types.Message):
     chat_type=[types.ChatType.SUPERGROUP, types.ChatType.GROUP],
     commands=['set'])
 async def send_welcome(message: types.Message):
+
     try:
         await bot.promote_chat_member(message.chat.id,
                                       message.from_user.id,
-                                      can_pin_messages=True)
+                                      can_invite_users=True)
+
         await bot.set_chat_administrator_custom_title(message.chat.id,
                                                       message.from_user.id,
                                                       message.get_args())
+
         await message.reply(f"Теперь ты {message.get_args()}, но все равно кожанный мешок.")
-    except Exception as e:
-        await message.reply(f"{e}")
-        print(e)
+
+    except BadRequest as e:
+        error_message = str(e)
+        if error_message == 'Not enough rights':
+            await message.reply(f"Не достаточно прав.")
+        else:
+            logging.error(f"Bad Request: {error_message}")
 
 
 async def on_startup(dp):
